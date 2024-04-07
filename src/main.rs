@@ -25,17 +25,21 @@ fn main() {
     for stream in listener.incoming() {
         match stream {
             Ok(mut _stream) => {
-                println!("accepted new connection");
-                let mut request = String::new();
-                _stream.read_to_string(&mut request).unwrap();
+            //     println!("accepted new connection");
+            //     let mut request = String::new();
+            //     _stream.read_to_string(&mut request).unwrap();
 
-                request.split("\n").for_each(|req| {
-                    match handle_request(&req, &mut _stream) {
-                        Ok(_) => (),
-                        Err(e) => println!("error: {}", e),
-                    }
-                });
+            //     request
+            //         .split("\n")
+            //         .for_each(|req| match handle_request(&req, &mut _stream) {
+            //             Ok(_) => (),
+            //             Err(e) => println!("error: {}", e),
+            //         });
+                println!("accepted new connection");
+                let response = b"+PONG\r\n";
+                _stream.write_all(response).unwrap();
             }
+            
             Err(e) => {
                 println!("error: {}", e);
             }
