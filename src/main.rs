@@ -1,20 +1,20 @@
 use std::{
     io::{Read, Write},
-    net::{TcpListener, TcpStream},
+    net::TcpListener,
 };
 
-fn handle_request(request: &str, stream: &mut TcpStream) -> Result<(), String> {
-    match request {
-        "ping" => {
-            let response = b"+PONG\r\n";
-            match stream.write_all(response) {
-                Ok(_) => Ok(()),
-                Err(e) => Err(e.to_string()),
-            }
-        }
-        _ => Err(format!("Do not support request {}", request)),
-    }
-}
+// fn handle_request(request: &str, stream: &mut TcpStream) -> Result<(), String> {
+//     match request {
+//         "ping" => {
+//             let response = b"+PONG\r\n";
+//             match stream.write_all(response) {
+//                 Ok(_) => Ok(()),
+//                 Err(e) => Err(e.to_string()),
+//             }
+//         }
+//         _ => Err(format!("Do not support request {}", request)),
+//     }
+// }
 
 fn main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
