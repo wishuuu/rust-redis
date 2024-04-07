@@ -1,5 +1,5 @@
 use anyhow::Result;
-use resp::Value;
+use resp::{RespHandler, Value};
 use tokio::net::{TcpListener, TcpStream};
 
 mod resp;
@@ -27,7 +27,7 @@ async fn main() {
 }
 
 async fn handle_request(stream: TcpStream) {
-    let mut handler = resp::RespHandler::new(stream);
+    let mut handler = RespHandler::new(stream);
 
     loop {
         let value = handler.read_value().await.unwrap();
