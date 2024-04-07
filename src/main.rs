@@ -30,6 +30,7 @@ fn main() {
                 _stream.read_to_string(&mut request).unwrap();
 
                 request.split("\r\n").for_each(|req| {
+                    println!("request: {}", req);
                     match handle_request(&req, &mut _stream) {
                         Ok(_) => (),
                         Err(e) => println!("error: {}", e),
