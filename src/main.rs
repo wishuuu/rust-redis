@@ -29,8 +29,7 @@ fn main() {
                 let mut request = String::new();
                 _stream.read_to_string(&mut request).unwrap();
 
-                request.split("\r\n").for_each(|req| {
-                    println!("request: {}", req);
+                request.split("\n").for_each(|req| {
                     match handle_request(&req, &mut _stream) {
                         Ok(_) => (),
                         Err(e) => println!("error: {}", e),
