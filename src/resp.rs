@@ -10,6 +10,7 @@ pub enum Value {
     SimpleString(String),
     BulkString(String),
     Array(Vec<Value>),
+    Nil
 }
 
 impl Value {
@@ -17,6 +18,7 @@ impl Value {
         match self {
             Value::SimpleString(s) => format!("+{}\r\n", s),
             Value::BulkString(s) => format!("${}\r\n{}\r\n", s.chars().count(), s),
+            Value::Nil => "$-1\r\n".to_string(),
             _ => panic!("Unsupported serialize for {:?}", self),
         }
     }
