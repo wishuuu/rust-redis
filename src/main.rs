@@ -81,9 +81,9 @@ fn unpack_bulk_str(value: Value) -> Result<String> {
 fn extract_duration_ms(args: Vec<Value>) -> Option<Duration> {
     for i in 1..args.len() {
         match &args[i] {
-            Value::SimpleString(c) => {
+            Value::BulkString(c) => {
                 if c.to_ascii_uppercase() == "PX" {
-                    if let Value::SimpleString(foo) = &args[i + 1] {
+                    if let Value::BulkString(foo) = &args[i + 1] {
                         return Some(Duration::from_millis(foo.parse::<u64>().unwrap_or(0)));
                     }
                 }
