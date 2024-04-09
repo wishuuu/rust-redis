@@ -57,7 +57,7 @@ impl DataLayer {
     pub fn get_value(self, key: Value) -> Value {
         let db = self.db.lock().unwrap();
         if let Some(value) = db.get(&key.serialize()) {
-            if value.is_expired() {
+            if !value.is_expired() {
                 println!(
                     "DEBUG: returned key value and its expiration {:?}, {:?}, {:?}",
                     value.value,
