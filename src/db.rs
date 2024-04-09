@@ -22,6 +22,15 @@ impl Entry {
             },
         }
     }
+
+    pub fn is_expired(&self) -> bool {
+        if let Some(expire) = self.expires_at {
+            if SystemTime::now() >= expire {
+                return true
+            }
+        }
+        false
+    }
 }
 
 pub type Db = Arc<Mutex<HashMap<String, Entry>>>;
@@ -48,8 +57,13 @@ impl DataLayer {
     pub fn get_value(self, key: Value) -> Value {
         let db = self.db.lock().unwrap();
         if let Some(value) = db.get(&key.serialize()) {
-            if value.expires_at == None || value.expires_at.unwrap() > SystemTime::now() {
-                println!("DEBUG: returned key value and its expiration {:?}, {:?}", value.value, value.expires_at.unwrap_or(SystemTime::now()));
+            if value.is_expired() {
+                println!(
+                    "DEBUG: returned key value and its expiration {:?}, {:?}, {:?}",
+                    value.value,
+                    value.expires_at.unwrap_or(SystemTime::now()),
+                    SystemTime::now()
+                );
                 return value.value.clone();
             }
         }
