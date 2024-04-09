@@ -1,35 +1,28 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
-
 use anyhow::Result;
-use bytes::Bytes;
+use db::DataLayer;
 use resp::{RespHandler, Value};
 use tokio::net::{TcpListener, TcpStream};
 
 mod resp;
-
-type Db = Arc<Mutex<HashMap<String, Value>>>;
+mod db;
 
 #[tokio::main]
 async fn main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     let listener = TcpListener::bind("127.0.0.1:6379").await.unwrap();
 
-    let db = Arc::new(Mutex::new(HashMap::new()));
+    let data_layer = DataLayer::new();
 
     loop {
         let stream = listener.accept().await;
-        let db = db.clone();
+        let data_layer = data_layer.clone();
         match stream {
             Ok((stream, _)) => {
                 println!("accepted new connection");
                 tokio::spawn(async move {
-                    handle_request(stream, db).await;
+                    handle_request(stream, data_layer).await;
                 });
             }
-
             Err(e) => {
                 println!("error: {}", e);
             }
@@ -37,7 +30,7 @@ async fn main() {
     }
 }
 
-async fn handle_request(stream: TcpStream, db: Db) {
+async fn handle_request(stream: TcpStream, db: DataLayer) {
     let mut handler = RespHandler::new(stream);
 
     loop {
@@ -50,8 +43,8 @@ async fn handle_request(stream: TcpStream, db: Db) {
             match command.to_ascii_uppercase().as_str() {
                 "PING" => Value::SimpleString("PONG".to_string()),
                 "ECHO" => args.first().unwrap().clone(),
-                "SET" => set_value(args.first().unwrap().clone(), args[1].clone(), db.clone()),
-                "GET" => get_value(args.first().unwrap().clone(), db.clone()),
+                "SET" => db.clone().set_value(args.first().unwrap().clone(), args[1].clone()),
+                "GET" => db.clone().get_value(args.first().unwrap().clone()),
                 c => panic!("Cannot handle commad {}", c),
             }
         } else {
@@ -78,20 +71,5 @@ fn unpack_bulk_str(value: Value) -> Result<String> {
     match value {
         Value::BulkString(s) => Ok(s),
         _ => Err(anyhow::anyhow!("Expected command to be bulk string")),
-    }
-}
-
-fn set_value(key: Value, value: Value, db: Db) -> Value {
-    let mut db = db.lock().unwrap();
-    db.insert(key.clone().serialize(), value.clone());
-    Value::SimpleString("OK".to_string())
-}
-
-fn get_value(key: Value, db: Db) -> Value {
-    let db = db.lock().unwrap();
-    if let Some(value) = db.get(&key.serialize()) {
-        value.clone()
-    } else {
-        Value::Nil
     }
 }
