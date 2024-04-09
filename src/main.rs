@@ -1,10 +1,12 @@
+use std::{ascii::AsciiExt, time::Duration};
+
 use anyhow::Result;
 use db::DataLayer;
 use resp::{RespHandler, Value};
 use tokio::net::{TcpListener, TcpStream};
 
-mod resp;
 mod db;
+mod resp;
 
 #[tokio::main]
 async fn main() {
@@ -43,7 +45,9 @@ async fn handle_request(stream: TcpStream, db: DataLayer) {
             match command.to_ascii_uppercase().as_str() {
                 "PING" => Value::SimpleString("PONG".to_string()),
                 "ECHO" => args.first().unwrap().clone(),
-                "SET" => db.clone().set_value(args.first().unwrap().clone(), args[1].clone()),
+                "SET" => db
+                    .clone()
+                    .set_value(args.first().unwrap().clone(), args[1].clone(), extract_duration_ms(args)),
                 "GET" => db.clone().get_value(args.first().unwrap().clone()),
                 c => panic!("Cannot handle commad {}", c),
             }
@@ -72,4 +76,20 @@ fn unpack_bulk_str(value: Value) -> Result<String> {
         Value::BulkString(s) => Ok(s),
         _ => Err(anyhow::anyhow!("Expected command to be bulk string")),
     }
+}
+
+fn extract_duration_ms(args: Vec<Value>) -> Option<Duration> {
+    for i in 1..args.len() {
+        match &args[i] {
+            Value::SimpleString(c) => {
+                if c.to_ascii_uppercase() == "PX" {
+                    if let Value::SimpleString(foo) = &args[i + 1] {
+                        return Some(Duration::from_millis(foo.parse::<u64>().unwrap_or(0)));
+                    }
+                }
+            }
+            _ => {}
+        };
+    }
+    None
 }
