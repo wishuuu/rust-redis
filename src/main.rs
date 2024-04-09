@@ -1,4 +1,4 @@
-use std::{ascii::AsciiExt, time::Duration};
+use std::time::Duration;
 
 use anyhow::Result;
 use db::DataLayer;

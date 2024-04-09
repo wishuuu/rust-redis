@@ -49,6 +49,7 @@ impl DataLayer {
         let db = self.db.lock().unwrap();
         if let Some(value) = db.get(&key.serialize()) {
             if value.expires_at == None || value.expires_at.unwrap() > SystemTime::now() {
+                println!("DEBUG: returned key value and its expiration {:?}, {:?}", value.value, value.expires_at.unwrap());
                 return value.value.clone();
             }
         }
