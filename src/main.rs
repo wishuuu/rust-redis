@@ -1,17 +1,25 @@
-use std::time::Duration;
+use std::{env, time::Duration};
 
 use anyhow::Result;
 use db::DataLayer;
 use resp::{RespHandler, Value};
 use tokio::net::{TcpListener, TcpStream};
 
+
 mod db;
 mod resp;
 
 #[tokio::main]
 async fn main() {
-    // You can use print statements as follows for debugging, they'll be visible when running tests.
-    let listener = TcpListener::bind("127.0.0.1:6379").await.unwrap();
+    let mut args = env::args().into_iter();
+    args.next();
+    let port: u16 = if let Some("--port") = args.next().as_deref() {
+        args.next().unwrap().parse().expect("port expects u16")
+    } else{
+        6379
+    };
+
+    let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).await.unwrap();
 
     let data_layer = DataLayer::new();
 
