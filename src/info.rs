@@ -1,18 +1,18 @@
-use std::net::Ipv4Addr;
+//use std::net::Ipv4Addr;
 
 use crate::resp::Value;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Role {
     Master,
-    Slave(Ipv4Addr),
+    //Slave(Ipv4Addr),
 }
 
 impl Role {
     fn serialize(self) -> String {
         match self {
             Role::Master => "role:master".to_string(),
-            Role::Slave(_) => "role:slave".to_string()
+            //Role::Slave(_) => "role:slave".to_string()
         }
     }
 }
@@ -32,7 +32,10 @@ impl Info {
     pub fn serialize(self, info_part: &str) -> Value {
         match info_part.to_ascii_lowercase().as_str() {
             "replication" => Value::BulkString(format!("# Replication\r\n{}", self.role.serialize() )),
-            _ => panic!()
+            c => {
+                println!("Received value {} as serialization info key, panicking", c);
+                Value::Nil
+            }
         }
     }
 }
