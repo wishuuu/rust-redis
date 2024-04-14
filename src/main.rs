@@ -13,16 +13,10 @@ mod resp;
 #[tokio::main]
 async fn main() {
     let mut args = env::args().into_iter();
-    args.next();
-    let port: u16 = if let Some("--port") = args.next().as_deref() {
-        args.next().unwrap().parse().expect("port expects u16")
-    } else {
-        6379
-    };
+    let mut info = Info::new().from_args(args);
 
-    let info = Info::new(Role::Master);
 
-    let listener = TcpListener::bind(format!("127.0.0.1:{}", port))
+    let listener = TcpListener::bind(format!("127.0.0.1:{}", info.port))
         .await
         .unwrap();
 
