@@ -35,13 +35,17 @@ impl Info {
     pub fn from_args(mut self, mut args: Args) -> Self {
         args.next();
         loop {
-            if let Some("--port") = args.next().as_deref() {
-                self.port = args.next().unwrap().parse().expect("port expects u16")
-            } else if let Some("--replicaof") = args.next_back().as_deref() {
-                self.role = Role::Slave(SocketAddrV4::new(
-                    args.next().unwrap().parse().expect("YUOA SUCK"),
-                    args.next().unwrap().parse().expect("YOUA SUCK 2"),
-                ))
+            if let Some(c) = args.next().as_deref() {
+                match c {
+                    "--port" => self.port = args.next().unwrap().parse().expect("port expects u16"),
+                    "--replicaof" => {
+                        self.role = Role::Slave(SocketAddrV4::new(
+                            args.next().unwrap().parse().expect("YOA SUCK"),
+                            args.next().unwrap().parse().expect("YOUA SUCK 2"),
+                        ))
+                    }
+                    _ => {}
+                }
             } else {
                 break;
             }
