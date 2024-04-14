@@ -2,11 +2,12 @@ use std::{env, time::Duration};
 
 use anyhow::Result;
 use db::DataLayer;
+use info::{Info, Role};
 use resp::{RespHandler, Value};
 use tokio::net::{TcpListener, TcpStream};
 
-
 mod db;
+mod info;
 mod resp;
 
 #[tokio::main]
@@ -15,11 +16,15 @@ async fn main() {
     args.next();
     let port: u16 = if let Some("--port") = args.next().as_deref() {
         args.next().unwrap().parse().expect("port expects u16")
-    } else{
+    } else {
         6379
     };
 
-    let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).await.unwrap();
+    let info = Info::new(Role::Master);
+
+    let listener = TcpListener::bind(format!("127.0.0.1:{}", port))
+        .await
+        .unwrap();
 
     let data_layer = DataLayer::new();
 
@@ -30,7 +35,7 @@ async fn main() {
             Ok((stream, _)) => {
                 println!("accepted new connection");
                 tokio::spawn(async move {
-                    handle_request(stream, data_layer).await;
+                    handle_request(stream, data_layer, info).await;
                 });
             }
             Err(e) => {
@@ -40,7 +45,7 @@ async fn main() {
     }
 }
 
-async fn handle_request(stream: TcpStream, db: DataLayer) {
+async fn handle_request(stream: TcpStream, db: DataLayer, info: Info) {
     let mut handler = RespHandler::new(stream);
 
     loop {
@@ -53,10 +58,13 @@ async fn handle_request(stream: TcpStream, db: DataLayer) {
             match command.to_ascii_uppercase().as_str() {
                 "PING" => Value::SimpleString("PONG".to_string()),
                 "ECHO" => args.first().unwrap().clone(),
-                "SET" => db
-                    .clone()
-                    .set_value(args.first().unwrap().clone(), args[1].clone(), extract_duration_ms(args)),
+                "SET" => db.clone().set_value(
+                    args.first().unwrap().clone(),
+                    args[1].clone(),
+                    extract_duration_ms(args),
+                ),
                 "GET" => db.clone().get_value(args.first().unwrap().clone()),
+                "INFO" => info.serialize(&args[1].clone().serialize()),
                 c => panic!("Cannot handle commad {}", c),
             }
         } else {
