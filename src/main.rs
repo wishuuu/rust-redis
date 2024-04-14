@@ -2,7 +2,7 @@ use std::{env, time::Duration};
 
 use anyhow::Result;
 use db::DataLayer;
-use info::Info;
+use info::{Info, InfoLayer};
 use resp::{RespHandler, Value};
 use tokio::net::{TcpListener, TcpStream};
 
@@ -15,8 +15,10 @@ async fn main() {
     let args = env::args().into_iter();
     let info = Info::new().from_args(args);
 
+    let info = InfoLayer::new(info);
 
-    let listener = TcpListener::bind(format!("127.0.0.1:{}", info.port))
+
+    let listener = TcpListener::bind(format!("127.0.0.1:{}", info.info.lock().unwrap().port))
         .await
         .unwrap();
 
@@ -25,6 +27,7 @@ async fn main() {
     loop {
         let stream = listener.accept().await;
         let data_layer = data_layer.clone();
+        let info = info.clone();
         match stream {
             Ok((stream, _)) => {
                 println!("accepted new connection");
@@ -39,7 +42,7 @@ async fn main() {
     }
 }
 
-async fn handle_request(stream: TcpStream, db: DataLayer, info: Info) {
+async fn handle_request(stream: TcpStream, db: DataLayer, info: InfoLayer) {
     let mut handler = RespHandler::new(stream);
 
     loop {
@@ -58,7 +61,7 @@ async fn handle_request(stream: TcpStream, db: DataLayer, info: Info) {
                     extract_duration_ms(args),
                 ),
                 "GET" => db.clone().get_value(args.first().unwrap().clone()),
-                "INFO" => info.serialize(&args[0]),
+                "INFO" => info.info.lock().unwrap().clone().serialize(&args[0]),
                 c => panic!("Cannot handle commad {}", c),
             }
         } else {

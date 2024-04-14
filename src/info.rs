@@ -1,6 +1,7 @@
 use std::net::{Ipv4Addr, SocketAddrV4};
 
 use std::env::Args;
+use std::sync::{Arc, Mutex};
 
 use crate::resp::Value;
 
@@ -19,16 +20,40 @@ impl Role {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Info {
-    pub role: Role,
     pub port: u16,
+    pub replication: ReplicationInfo,
+}
+
+#[derive(Debug, Clone)]
+pub struct ReplicationInfo {
+    pub role: Role,
+    pub master_replid: String,
+    pub master_repl_offset: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct InfoLayer {
+    pub info: Arc<Mutex<Info>>,
+}
+
+impl InfoLayer {
+    pub fn new(info: Info) -> Self {
+        InfoLayer {
+            info: Arc::new(Mutex::new(info))
+        }
+    }
 }
 
 impl Info {
     pub fn new() -> Self {
         Info {
-            role: Role::Master,
+            replication: ReplicationInfo {
+                role: Role::Master,
+                master_replid: "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb".to_string(),
+                master_repl_offset: 0,
+            },
             port: 6379,
         }
     }
@@ -39,8 +64,11 @@ impl Info {
                 match c {
                     "--port" => self.port = args.next().unwrap().parse().expect("port expects u16"),
                     "--replicaof" => {
-                        self.role = Role::Slave(SocketAddrV4::new(
-                            args.next().unwrap().parse().unwrap_or(Ipv4Addr::new(127, 0, 0, 1)),
+                        self.replication.role = Role::Slave(SocketAddrV4::new(
+                            args.next()
+                                .unwrap()
+                                .parse()
+                                .unwrap_or(Ipv4Addr::new(127, 0, 0, 1)),
                             args.next().unwrap().parse().unwrap_or(6379),
                         ))
                     }
@@ -56,9 +84,12 @@ impl Info {
     pub fn serialize(self, info_part: &Value) -> Value {
         match info_part {
             Value::BulkString(c) => match c.as_str() {
-                "replication" => {
-                    Value::BulkString(format!("# Replication\r\n{}", self.role.serialize()))
-                }
+                "replication" => Value::BulkString(format!(
+                    "# Replication\r\n{}\r\nmaster_replid:{}\r\nmaster_repl_offset:{}",
+                    self.replication.role.serialize(),
+                    self.replication.master_replid,
+                    self.replication.master_repl_offset
+                )),
                 _ => Value::Nil,
             },
             c => {
