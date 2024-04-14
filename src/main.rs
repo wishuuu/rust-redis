@@ -64,7 +64,7 @@ async fn handle_request(stream: TcpStream, db: DataLayer, info: Info) {
                     extract_duration_ms(args),
                 ),
                 "GET" => db.clone().get_value(args.first().unwrap().clone()),
-                "INFO" => info.serialize(&args[0].clone().serialize()),
+                "INFO" => info.serialize(&args[0]),
                 c => panic!("Cannot handle commad {}", c),
             }
         } else {

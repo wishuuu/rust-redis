@@ -24,16 +24,22 @@ pub struct Info {
 
 impl Info {
     pub fn new(role: Role) -> Self {
-        Info {
-            role
-        }
+        Info { role }
     }
 
-    pub fn serialize(self, info_part: &str) -> Value {
-        match info_part.to_ascii_lowercase().as_str() {
-            "replication" => Value::BulkString(format!("# Replication\r\n{}", self.role.serialize() )),
+    pub fn serialize(self, info_part: &Value) -> Value {
+        match info_part {
+            Value::BulkString(c) => match c.as_str() {
+                "replication" => {
+                    Value::BulkString(format!("# Replication\r\n{}", self.role.serialize()))
+                }
+                _ => Value::Nil,
+            },
             c => {
-                println!("Received value {} as serialization info key, panicking", c);
+                println!(
+                    "Received value {:?} as serialization info key, panicking",
+                    c
+                );
                 Value::Nil
             }
         }
