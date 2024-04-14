@@ -1,4 +1,4 @@
-use std::net::SocketAddrV4;
+use std::net::{Ipv4Addr, SocketAddrV4};
 
 use std::env::Args;
 
@@ -40,8 +40,8 @@ impl Info {
                     "--port" => self.port = args.next().unwrap().parse().expect("port expects u16"),
                     "--replicaof" => {
                         self.role = Role::Slave(SocketAddrV4::new(
-                            args.next().unwrap().parse().expect("YOA SUCK"),
-                            args.next().unwrap().parse().expect("YOUA SUCK 2"),
+                            args.next().unwrap().parse().unwrap_or(Ipv4Addr::new(127, 0, 0, 1)),
+                            args.next().unwrap().parse().unwrap_or(6379),
                         ))
                     }
                     _ => {}
