@@ -2,7 +2,7 @@ use std::{env, time::Duration};
 
 use anyhow::Result;
 use db::DataLayer;
-use info::{Info, Role};
+use info::Info;
 use resp::{RespHandler, Value};
 use tokio::net::{TcpListener, TcpStream};
 
@@ -12,8 +12,8 @@ mod resp;
 
 #[tokio::main]
 async fn main() {
-    let mut args = env::args().into_iter();
-    let mut info = Info::new().from_args(args);
+    let args = env::args().into_iter();
+    let info = Info::new().from_args(args);
 
 
     let listener = TcpListener::bind(format!("127.0.0.1:{}", info.port))

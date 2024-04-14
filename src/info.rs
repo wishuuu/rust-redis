@@ -1,4 +1,4 @@
-use std::net::{Ipv4Addr, SocketAddrV4};
+use std::net::SocketAddrV4;
 
 use std::env::Args;
 
@@ -14,7 +14,7 @@ impl Role {
     fn serialize(self) -> String {
         match self {
             Role::Master => "role:master".to_string(),
-            Role::Slave(_) => "role:slave".to_string()
+            Role::Slave(_) => "role:slave".to_string(),
         }
     }
 }
@@ -22,14 +22,14 @@ impl Role {
 #[derive(Debug, Clone, Copy)]
 pub struct Info {
     pub role: Role,
-    pub port: u16
+    pub port: u16,
 }
 
 impl Info {
     pub fn new() -> Self {
         Info {
             role: Role::Master,
-            port: 6379
+            port: 6379,
         }
     }
     pub fn from_args(mut self, mut args: Args) -> Self {
@@ -38,9 +38,11 @@ impl Info {
             if let Some("--port") = args.next().as_deref() {
                 self.port = args.next().unwrap().parse().expect("port expects u16")
             } else if let Some("--replicaof") = args.next_back().as_deref() {
-                self.role = Role::Slave(SocketAddrV4::new(args.next().unwrap().parse().expect("YUOA SUCK"), args.next().unwrap().parse().expect("YOUA SUCK 2")))
-            }
-            else {
+                self.role = Role::Slave(SocketAddrV4::new(
+                    args.next().unwrap().parse().expect("YUOA SUCK"),
+                    args.next().unwrap().parse().expect("YOUA SUCK 2"),
+                ))
+            } else {
                 break;
             }
         }
