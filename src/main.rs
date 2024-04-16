@@ -2,9 +2,9 @@ use std::{env, time::Duration};
 
 use anyhow::Result;
 use db::DataLayer;
-use info::{Info, InfoLayer};
+use info::{Info, InfoLayer, Role};
 use resp::{RespHandler, Value};
-use tokio::net::{TcpListener, TcpStream};
+use tokio::{io::{AsyncReadExt, AsyncWriteExt}, net::{TcpListener, TcpStream}};
 
 mod db;
 mod info;
@@ -23,6 +23,13 @@ async fn main() {
         .unwrap();
 
     let data_layer = DataLayer::new();
+
+    if let Role::Slave(master_socket) = info.info.lock().unwrap().replication.role {
+        let mut stream = TcpStream::connect(master_socket).await.unwrap();
+
+        let _ = stream.write(Value::BulkString("ping".to_string()).serialize().as_bytes());
+        let _ = stream.read(&mut [0; 128]);
+    }
 
     loop {
         let stream = listener.accept().await;
