@@ -27,7 +27,8 @@ async fn main() {
     if let Role::Slave(master_socket) = info.info.lock().unwrap().replication.role {
         let mut stream = TcpStream::connect(master_socket).await.unwrap();
 
-        let _ = stream.write(Value::BulkString("ping".to_string()).serialize().as_bytes());
+        // let _ = stream.write(Value::BulkString("ping".to_string()).serialize().as_bytes());
+        let _ = stream.write(b"*1\r\n$4\r\nping\r\n");
         let _ = stream.read(&mut [0; 128]);
     }
 
