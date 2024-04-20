@@ -25,6 +25,7 @@ async fn main() {
     let data_layer = DataLayer::new();
 
     if let Role::Slave(master_socket) = info.info.lock().unwrap().replication.role {
+        println!("Connecting to {:?} master", master_socket);
         let mut stream = TcpStream::connect(master_socket).await.unwrap();
 
         // let _ = stream.write(Value::BulkString("ping".to_string()).serialize().as_bytes());
