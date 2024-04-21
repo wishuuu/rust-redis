@@ -30,16 +30,38 @@ async fn main() {
         println!("Connecting to {:?} master", master_socket);
         let mut stream = TcpStream::connect(master_socket).await.unwrap();
 
-        println!(
-            "Bytes to write: {:?}",
-            Value::Array(Vec::from([Value::BulkString("ping".to_string()),])).serialize(),
-        );
+        let _ = stream
+            .write(
+                Value::Array(Vec::from([Value::BulkString("ping".to_string())]))
+                    .serialize()
+                    .as_bytes(),
+            )
+            .await
+            .unwrap();
+        let _ = stream.flush().await.unwrap();
+        let _ = stream.read(&mut [0; 128]);
 
-        let _bytes_ = stream.write(
-            Value::Array(Vec::from([Value::BulkString("ping".to_string())]))
-                .serialize()
-                .as_bytes(),
-        ).await.unwrap();
+        let _ = stream.write(
+            Value::Array(Vec::from([
+                Value::BulkString("REPLCONF".to_string()),
+                Value::BulkString("listening-port".to_string()),
+                Value::BulkString(info.info.lock().unwrap().port.to_string()),
+            ]))
+            .serialize()
+            .as_bytes(),
+        );
+        let _ = stream.flush().await.unwrap();
+        let _ = stream.read(&mut [0; 128]);
+        
+        let _ = stream.write(
+            Value::Array(Vec::from([
+                Value::BulkString("REPLCONF".to_string()),
+                Value::BulkString("capa".to_string()),
+                Value::BulkString("sync2".to_string()),
+            ]))
+            .serialize()
+            .as_bytes(),
+        );
         let _ = stream.flush().await.unwrap();
         let _ = stream.read(&mut [0; 128]);
     }
