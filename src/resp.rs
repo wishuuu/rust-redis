@@ -18,8 +18,9 @@ impl Value {
         match self {
             Value::SimpleString(s) => format!("+{}\r\n", s),
             Value::BulkString(s) => format!("${}\r\n{}\r\n", s.chars().count(), s),
+            Value::Array(v) => format!("*{}\r\n{}", v.len(), v.iter().map(|val| val.clone().serialize()).collect::<Vec<_>>().join("")),
             Value::Nil => "$-1\r\n".to_string(),
-            _ => panic!("Unsupported serialize for {:?}", self),
+            // _ => panic!("Unsupported serialize for {:?}", self),
         }
     }
 }
@@ -39,6 +40,9 @@ impl RespHandler {
 
     pub async fn read_value(&mut self) -> Result<Option<Value>> {
         let bytes_read = self.stream.read_buf(&mut self.buffer).await?;
+
+        println!("Bytes read: {:?}", bytes_read);
+        println!("Buffer: {:?}", self.buffer);
 
         if bytes_read == 0 {
             return Ok(None);

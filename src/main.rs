@@ -4,7 +4,10 @@ use anyhow::Result;
 use db::DataLayer;
 use info::{Info, InfoLayer, Role};
 use resp::{RespHandler, Value};
-use tokio::{io::{AsyncReadExt, AsyncWriteExt}, net::{TcpListener, TcpStream}};
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::{TcpListener, TcpStream},
+};
 
 mod db;
 mod info;
@@ -17,7 +20,6 @@ async fn main() {
 
     let info = InfoLayer::new(info);
 
-
     let listener = TcpListener::bind(format!("127.0.0.1:{}", info.info.lock().unwrap().port))
         .await
         .unwrap();
@@ -28,8 +30,17 @@ async fn main() {
         println!("Connecting to {:?} master", master_socket);
         let mut stream = TcpStream::connect(master_socket).await.unwrap();
 
-        // let _ = stream.write(Value::BulkString("ping".to_string()).serialize().as_bytes());
-        let _ = stream.write(b"*1\r\n$4\r\nping\r\n");
+        println!(
+            "Bytes to write: {:?}",
+            Value::Array(Vec::from([Value::BulkString("ping".to_string()),])).serialize(),
+        );
+
+        let _bytes_ = stream.write(
+            Value::Array(Vec::from([Value::BulkString("ping".to_string())]))
+                .serialize()
+                .as_bytes(),
+        ).await.unwrap();
+        let _ = stream.flush().await.unwrap();
         let _ = stream.read(&mut [0; 128]);
     }
 
