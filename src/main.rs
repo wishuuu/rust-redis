@@ -4,9 +4,8 @@ use anyhow::Result;
 use db::DataLayer;
 use info::{Info, InfoLayer, Role};
 use resp::{RespHandler, Value};
-use tokio::io::AsyncReadExt;
 use tokio::{
-    io::AsyncWriteExt,
+    io::{AsyncReadExt, AsyncWriteExt},
     net::{TcpListener, TcpStream},
 };
 
@@ -27,36 +26,40 @@ async fn main() {
 
     let data_layer = DataLayer::new();
 
-    if let Role::Slave(master_socket) = info.info.lock().unwrap().replication.role {
+    let i = info.info.lock().unwrap();
+
+    if let Role::Slave(master_socket) = i.replication.role {
         println!("Connecting to {:?} master", master_socket);
         let mut stream = TcpStream::connect(master_socket).await.unwrap();
 
         let _ = stream
-            .write(
+            .write_all(
                 Value::Array(Vec::from([Value::BulkString("ping".to_string())]))
                     .serialize()
                     .as_bytes(),
             )
             .await
             .unwrap();
-        let _ = stream.flush().await.unwrap();
+        let mut response = vec![0; 1024];
+        let _ = stream.read(&mut response).await.unwrap();
 
         let _ = stream
-            .write(
+            .write_all(
                 Value::Array(Vec::from([
                     Value::BulkString("REPLCONF".to_string()),
                     Value::BulkString("listening-port".to_string()),
-                    Value::BulkString(info.info.lock().unwrap().port.to_string()),
+                    Value::BulkString(i.port.to_string()),
                 ]))
                 .serialize()
                 .as_bytes(),
             )
             .await
             .unwrap();
-        let _ = stream.flush().await.unwrap();
+        let mut response = vec![0; 1024];
+        let _ = stream.read(&mut response).await.unwrap();
 
         let _ = stream
-            .write(
+            .write_all(
                 Value::Array(Vec::from([
                     Value::BulkString("REPLCONF".to_string()),
                     Value::BulkString("capa".to_string()),
@@ -67,7 +70,8 @@ async fn main() {
             )
             .await
             .unwrap();
-        let _ = stream.flush().await.unwrap();
+        let mut response = vec![0; 1024];
+        let _ = stream.read(&mut response).await.unwrap();
     }
 
     loop {
@@ -108,6 +112,7 @@ async fn handle_request(stream: TcpStream, db: DataLayer, info: InfoLayer) {
                 ),
                 "GET" => db.clone().get_value(args.first().unwrap().clone()),
                 "INFO" => info.info.lock().unwrap().clone().serialize(&args[0]),
+                "REPLCONF" => Value::SimpleString("OK".to_string()),
                 c => panic!("Cannot handle commad {}", c),
             }
         } else {
