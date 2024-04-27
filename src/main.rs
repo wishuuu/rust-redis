@@ -26,52 +26,54 @@ async fn main() {
 
     let data_layer = DataLayer::new();
 
-    let i = info.info.lock().unwrap();
+    {
+        let i = info.info.lock().unwrap();
 
-    if let Role::Slave(master_socket) = i.replication.role {
-        println!("Connecting to {:?} master", master_socket);
-        let mut stream = TcpStream::connect(master_socket).await.unwrap();
+        if let Role::Slave(master_socket) = i.replication.role {
+            println!("Connecting to {:?} master", master_socket);
+            let mut stream = TcpStream::connect(master_socket).await.unwrap();
 
-        let _ = stream
-            .write_all(
-                Value::Array(Vec::from([Value::BulkString("ping".to_string())]))
-                    .serialize()
-                    .as_bytes(),
-            )
-            .await
-            .unwrap();
-        let mut response = vec![0; 1024];
-        let _ = stream.read(&mut response).await.unwrap();
+            let _ = stream
+                .write_all(
+                    Value::Array(Vec::from([Value::BulkString("ping".to_string())]))
+                        .serialize()
+                        .as_bytes(),
+                )
+                .await
+                .unwrap();
+            let mut response = vec![0; 1024];
+            let _ = stream.read(&mut response).await.unwrap();
 
-        let _ = stream
-            .write_all(
-                Value::Array(Vec::from([
-                    Value::BulkString("REPLCONF".to_string()),
-                    Value::BulkString("listening-port".to_string()),
-                    Value::BulkString(i.port.to_string()),
-                ]))
-                .serialize()
-                .as_bytes(),
-            )
-            .await
-            .unwrap();
-        let mut response = vec![0; 1024];
-        let _ = stream.read(&mut response).await.unwrap();
+            let _ = stream
+                .write_all(
+                    Value::Array(Vec::from([
+                        Value::BulkString("REPLCONF".to_string()),
+                        Value::BulkString("listening-port".to_string()),
+                        Value::BulkString(i.port.to_string()),
+                    ]))
+                        .serialize()
+                        .as_bytes(),
+                )
+                .await
+                .unwrap();
+            let mut response = vec![0; 1024];
+            let _ = stream.read(&mut response).await.unwrap();
 
-        let _ = stream
-            .write_all(
-                Value::Array(Vec::from([
-                    Value::BulkString("REPLCONF".to_string()),
-                    Value::BulkString("capa".to_string()),
-                    Value::BulkString("sync2".to_string()),
-                ]))
-                .serialize()
-                .as_bytes(),
-            )
-            .await
-            .unwrap();
-        let mut response = vec![0; 1024];
-        let _ = stream.read(&mut response).await.unwrap();
+            let _ = stream
+                .write_all(
+                    Value::Array(Vec::from([
+                        Value::BulkString("REPLCONF".to_string()),
+                        Value::BulkString("capa".to_string()),
+                        Value::BulkString("sync2".to_string()),
+                    ]))
+                        .serialize()
+                        .as_bytes(),
+                )
+                .await
+                .unwrap();
+            let mut response = vec![0; 1024];
+            let _ = stream.read(&mut response).await.unwrap();
+        }
     }
 
     loop {
