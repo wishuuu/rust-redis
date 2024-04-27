@@ -73,6 +73,21 @@ async fn main() {
                 .unwrap();
             let mut response = vec![0; 1024];
             let _ = stream.read(&mut response).await.unwrap();
+
+            let _ = stream
+                .write_all(
+                    Value::Array(Vec::from([
+                        Value::BulkString("PSYNC".to_string()),
+                        Value::BulkString("?".to_string()),
+                        Value::BulkString("-1".to_string()),
+                    ]))
+                        .serialize()
+                        .as_bytes(),
+                )
+                .await
+                .unwrap();
+            let mut response = vec![0; 1024];
+            let _ = stream.read(&mut response).await.unwrap();
         }
     }
 
@@ -115,6 +130,7 @@ async fn handle_request(stream: TcpStream, db: DataLayer, info: InfoLayer) {
                 "GET" => db.clone().get_value(args.first().unwrap().clone()),
                 "INFO" => info.info.lock().unwrap().clone().serialize(&args[0]),
                 "REPLCONF" => Value::SimpleString("OK".to_string()),
+                "PSYNC" => Value::SimpleString("FULLRESYNC 8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb 0".to_string()),
                 c => panic!("Cannot handle commad {}", c),
             }
         } else {
