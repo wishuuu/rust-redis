@@ -39,7 +39,7 @@ async fn main() {
             .await
             .unwrap();
         let _ = stream.flush().await.unwrap();
-        let _ = stream.read(&mut [0; 128]);
+        let _ = stream.read(&mut [0; 128]).await.unwrap();
 
         let _ = stream.write(
             Value::Array(Vec::from([
@@ -51,7 +51,7 @@ async fn main() {
             .as_bytes(),
         );
         let _ = stream.flush().await.unwrap();
-        let _ = stream.read(&mut [0; 128]);
+        let _ = stream.read(&mut [0; 128]).await.unwrap();
         
         let _ = stream.write(
             Value::Array(Vec::from([
@@ -63,7 +63,7 @@ async fn main() {
             .as_bytes(),
         );
         let _ = stream.flush().await.unwrap();
-        let _ = stream.read(&mut [0; 128]);
+        let _ = stream.read(&mut [0; 128]).await.unwrap();
     }
 
     loop {
