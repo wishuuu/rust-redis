@@ -4,8 +4,9 @@ use anyhow::Result;
 use db::DataLayer;
 use info::{Info, InfoLayer, Role};
 use resp::{RespHandler, Value};
+use tokio::io::AsyncReadExt;
 use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt},
+    io::AsyncWriteExt,
     net::{TcpListener, TcpStream},
 };
 
@@ -40,26 +41,32 @@ async fn main() {
             .unwrap();
         let _ = stream.flush().await.unwrap();
 
-        let _ = stream.write(
-            Value::Array(Vec::from([
-                Value::BulkString("REPLCONF".to_string()),
-                Value::BulkString("listening-port".to_string()),
-                Value::BulkString(info.info.lock().unwrap().port.to_string()),
-            ]))
-            .serialize()
-            .as_bytes(),
-        );
+        let _ = stream
+            .write(
+                Value::Array(Vec::from([
+                    Value::BulkString("REPLCONF".to_string()),
+                    Value::BulkString("listening-port".to_string()),
+                    Value::BulkString(info.info.lock().unwrap().port.to_string()),
+                ]))
+                .serialize()
+                .as_bytes(),
+            )
+            .await
+            .unwrap();
         let _ = stream.flush().await.unwrap();
-        
-        let _ = stream.write(
-            Value::Array(Vec::from([
-                Value::BulkString("REPLCONF".to_string()),
-                Value::BulkString("capa".to_string()),
-                Value::BulkString("sync2".to_string()),
-            ]))
-            .serialize()
-            .as_bytes(),
-        );
+
+        let _ = stream
+            .write(
+                Value::Array(Vec::from([
+                    Value::BulkString("REPLCONF".to_string()),
+                    Value::BulkString("capa".to_string()),
+                    Value::BulkString("sync2".to_string()),
+                ]))
+                .serialize()
+                .as_bytes(),
+            )
+            .await
+            .unwrap();
         let _ = stream.flush().await.unwrap();
     }
 
